@@ -11,66 +11,49 @@ namespace StringExtension
     {
         public static int ToDecimal(this string source, int @base)
         {
-            if (source == null)
-                throw new ArgumentNullException($"{nameof(source)} can't be equal to null");
+            if (String.IsNullOrEmpty(source))
+                throw new ArgumentNullException($"{nameof(source)} can't be equal to null or empty");
 
             if (@base < 2 || @base > 16)
                 throw new ArgumentOutOfRangeException($"{nameof(@base)} must be in range of 2 till 16");
 
-            if (@base == 10)
-                return Int32.Parse(source);
 
-            if (source.Length >= sizeof(int)*8)
-                throw new ArgumentException($"Too big {nameof(source)}");
-
-            char[] digits = { '0', '1', '2', '3', '4', '5', '6', '7', '8' };
-            foreach (var d in source)
-            {
-                if (@base < 9 && char.IsLetter(d))
-                    throw new ArgumentException($"{nameof(source)} is unappropriate string for the base of {nameof(@base)}");
-
-                for (int i = 1; i <= 8; i++)
-                    if (@base == i + 1 && d > digits[i])
-                        throw new ArgumentException($"{nameof(source)} is unappropriate string for the base of {nameof(@base)}");
-            }
-
-            int result = ToDecimalValue(source, @base);
-
-            if (result == -1)
-                throw new ArgumentException($"Too big {nameof(source)}");
-
-            return result;
+            return ToDecimalValue(source, @base);
         }
 
         private static int ToDecimalValue(string source, int notation)
         {
             int result = 0;
 
+            source = source.ToUpperInvariant();
+            string alphabet = "0123456789ABCDEF";
             try
             {
-                checked
+                foreach (var d in source)
                 {
-                    foreach (var d in source)
+                    int value = alphabet.IndexOf(d);
+
+                    if (value > notation - 1 || value < 0)
                     {
-                        int i;
-
-                        if (d < '0' || d > '9')
-                            i = char.ToUpper(d) - 'A' + 10;
-                        else
-                            i = d - '0';
-
-                        result = result * notation + i;
+                        throw new ArgumentException($"The {d} is not used in {nameof(notation)} notation.");
                     }
+
+                    int i;
+
+                    if (d < '0' || d > '9')
+                        i = d - 'A' + 10;
+                    else
+                        i = d - '0';
+
+                    result = checked (result * notation + i);
                 }
-                
             }
             catch (OverflowException e)
             {
-                return -1;
+                throw new ArgumentException();
             }
-            
 
-            return result;
+            return result; 
         }
 
 
